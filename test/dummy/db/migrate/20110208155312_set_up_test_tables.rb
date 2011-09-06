@@ -21,6 +21,7 @@ class SetUpTestTables < ActiveRecord::Migration
       t.string   :event,     :null => false
       t.string   :whodunnit
       t.text     :object
+      t.text     :columns
       t.text     :object_changes
       t.datetime :created_at
 

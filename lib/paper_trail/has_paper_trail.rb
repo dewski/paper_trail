@@ -41,6 +41,12 @@ module PaperTrail
         class_attribute :meta
         self.meta = options[:meta] || {}
 
+        class_attribute :track_columns
+        self.track_columns = options[:track_columns] || true
+
+        class_attribute :ignored_columns
+        self.ignored_columns = options[:ignored_columns] || ['id', 'updated_at', 'created_at']
+
         class_attribute :paper_trail_enabled_for_model
         self.paper_trail_enabled_for_model = true
 
@@ -132,6 +138,7 @@ module PaperTrail
             :object    => object_to_string(item_before_change),
             :whodunnit => PaperTrail.whodunnit
           }
+          
           if version_class.column_names.include? 'object_changes'
             # The double negative (reject, !include?) preserves the hash structure of self.changes.
             data[:object_changes] = self.changes.reject do |key, value|
@@ -167,6 +174,25 @@ module PaperTrail
         end
         # Second we merge any extra data from the controller (if available).
         data.merge(PaperTrail.controller_info || {})
+        
+        column_changes = {}
+        change_info = changes.dup
+        change_info.reject! { |column_name, change_values|
+          self.class.ignored_columns.include?(column_name)
+        }
+
+        change_info.each do |column_name, change_values|
+          column_changes[column_name.to_sym] = {
+            :after  => change_values[1],
+            :before => change_values[0]
+          }
+        end
+        
+        data.merge(:columns => column_changes)
+      end
+      
+      def m
+        
       end
 
       def item_before_change
